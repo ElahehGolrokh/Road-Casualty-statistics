@@ -1,0 +1,7 @@
+version: '1.0.0'
+
+seed: 7
+
+data:
+  data_dir: 'data'
+  raw_data_path: 'Python_Data_Science_and_Machine_Learning_project1_Dataset.zip'
