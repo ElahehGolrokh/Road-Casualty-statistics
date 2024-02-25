@@ -1,20 +1,14 @@
 import argparse
-import importlib
-import pickle
-import sklearn
-import uuid
 
 from dataclasses import dataclass
-from datetime import datetime
 from omegaconf import OmegaConf
 from pathlib import Path
-
-from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score
 
 from src.data_preparation import DataProvider
 from src.data_cleaning import DataCleaner
 from src.evaluation import Evaluator
 from src.managing_report import ReportManager
+from src.training import Trainer
 
 
 parser = argparse.ArgumentParser(
@@ -47,18 +41,6 @@ parser.add_argument('--evaluate',
                     help='whether to execute the evaluation step.')
 
 args = parser.parse_args()
-
-
-def get_model(
-    model_name: str, import_module: str, model_params: dict=None
-) -> sklearn.base.BaseEstimator:
-    """Returns a scikit-learn model."""
-    model_class = getattr(importlib.import_module(import_module), model_name)
-    if model_params:
-        model = model_class(**model_params)  # Instantiates the model
-    else:
-        model = model_class()
-    return model
 
 
 @dataclass
@@ -100,7 +82,6 @@ class Pipeline():
     classifier_package: str = args.classifier_package
     do_evaluation: bool = args.evaluate
     run_dir = Path('run')
-    # run_info_path = Path('.run.pkl')
 
     def start(self) -> None:
         """Starting the pipeline"""
@@ -127,16 +108,18 @@ class Pipeline():
         DataCleaner(self.config) # Path(self.output_dir
 
     def train(self) -> None:
-        """Train the model and log to MLFlow and Discord"""
-
+        """Train the model and save it as pickle file"""
         if self.do_train:
             data = DataProvider(self.config, phase='train')
             x_train, y_train = data.run()
 
-            model = get_model(self.model, self.classifier_package) #, model_params
-            model.fit(x_train, y_train)
-            with open(self.model_path, 'wb') as file:
-                pickle.dump(model, file)
+            trainer = Trainer(self.config,
+                              x_train=x_train,
+                              y_train=y_train,
+                              model_path=self.model_path,
+                              model=self.model,
+                              classifier_package=self.classifier_package)
+            trainer.train()
 
     def evaluate(self) -> None:
         """Evaluate the best model."""
@@ -144,13 +127,16 @@ class Pipeline():
         if self.do_evaluation:
             data = DataProvider(self.config, phase='test')
             x_test, y_test = data.run()
-            # # updata report file
+
+            # evaluate the model named: model_name
             evaluator = Evaluator(self.config,
                                   x_test=x_test,
                                   y_test=y_test,
                                   model_path=self.model_path,
                                   model_name=self.model_name)
             report_dict = evaluator.get_results()
+
+            # update report file
             report_manager = ReportManager()
             report_manager.update_json(report_dict)
 
