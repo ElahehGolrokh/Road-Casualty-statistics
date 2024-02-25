@@ -7,15 +7,15 @@ This folder is containing the EDA of full data, pedestrians, car passengers and 
 ```shell
 python pipeline.py --clean --train --evaluate
 ```
-You can specify some more details with these arguments:
---config: default = config.yaml,
-          help = path to the config file
---model_name: default = model,
-              help = The name used for saving the trained model
---model: default = LogisticRegression,
-          help = choose one of the sklearn classification models
---classifier_package: default = sklearn.linear_model,
-                      help = choose one of the sklearn classification models
+You can specify some more details with these arguments:  <br>  
+--config: default = config.yaml,  <br>  
+          help = path to the config file  <br>  
+--model_name: default = model,  <br>  
+              help = The name used for saving the trained model  <br>  
+--model: default = LogisticRegression,  <br>  
+          help = choose one of the sklearn classification models  <br>  
+--classifier_package: default = sklearn.linear_model,  <br>  
+                      help = choose one of the sklearn classification models  <br>  
 
 You can see the documentation for this research in this link:
 https://docs.google.com/document/d/1VrPaA3A7noqAaNo_dyCth6nNfKxIQz8r2JCokE3iqjQ/edit#heading=h.dm3sgcgvgd4g
