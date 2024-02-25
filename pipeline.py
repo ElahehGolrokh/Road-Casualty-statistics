@@ -55,11 +55,10 @@ class Pipeline():
     Attributes
     ----------
         config_path: str path to the config file
-        output_dir: str where to write the prepared data
         do_clean: bool whether to execute the data cleaning step
         do_train: bool whether to execute the training step
         do_evaluation: bool whether to execute the evaluation step
-        run_dir: path to save outputs
+        run_dir: path to save reports and models
         run_info_path: path to info pickle file
         data_dir: path to save prepared data in the root dir
         meta_data_df: pandas dataframe of meta data csv file
@@ -68,9 +67,9 @@ class Pipeline():
     Methods
     -------
         start()
+        clean()
         train()
         evaluate()
-        export()
         end()
     """
 
@@ -105,7 +104,7 @@ class Pipeline():
     
     def clean(self) -> None:
         """clean the raw data to be ready for preparation phase"""
-        DataCleaner(self.config) # Path(self.output_dir
+        DataCleaner(self.config).clean_df(self.data_dir)
 
     def train(self) -> None:
         """Train the model and save it as pickle file"""
