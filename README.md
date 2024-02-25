@@ -1,6 +1,6 @@
 # Road-Casualty-statistics
 This project aims to analyze driving accident data to identify patterns and factors contributing to accidents and to provide solutions for reducing them.
-This version only supports LogisticRegression classifier. In future versions svm and RF classifiers are going to be implemented.
+This version only supports LogisticRegression classifier. In future versions svm and RF classifiers are going to be implemented.  <br>  
 The notebooks containing full version of data cleaning and EDA phase are stored in notebooks folder.
 This folder is containing the EDA of full data, pedestrians, car passengers and bus passengers.
 
