@@ -20,4 +20,3 @@ features:
   nan_1: ['casualty_type', 'casualty_home_area_type', 'casualty_imd_decile', 'age_of_casualty']
   nan_1_9: ['sex_of_casualty'] # 9 -> Unknown or other
   target: 'casualty_severity_Slight'
-

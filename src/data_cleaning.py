@@ -1,20 +1,53 @@
 import numpy as np
 import os
 import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
-warnings.filterwarnings("ignore")
-import pandas as pd
 import zipfile
+
+from omegaconf.dictconfig import DictConfig
 
 from .utils import read_csv
 
+warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.filterwarnings("ignore")
+import pandas as pd
+
 
 class DataCleaner:
-    def __init__(self, config) -> None:
+    """
+    Cleans the raw version of the data in this link:
+    https://www.kaggle.com/datasets/juhibhojani/road-accidents-data-2022/data
+
+    ...
+
+    Attributes
+    ----------
+        config: DictConf of config file
+        data_dir: str path to data directory
+
+    Private Methods
+    -------
+        _return_path()
+        _unzip_data()
+        _read_raw_csv()
+        _remove_non_informative()
+        _remove_outliers()
+        _dealing_with_nans()
+        _dealing_with_categories()
+        _get_dummies()
+
+    Public Methods
+    -------
+        clean_df()
+
+    """
+    def __init__(self, config: DictConfig) -> None:
         self.config = config
         self.data_dir = self.config.data.data_dir
-    
-    def return_path(self):
+
+    def _return_path(self) -> str:
+        """
+        Returns path to zipped file stored in the data directory
+        """
         raw_data_path = self.config.data.raw_data_path
         try:
             dir_path = os.path.join(self.data_dir, raw_data_path)
@@ -22,32 +55,39 @@ class DataCleaner:
             print('There are some problems about your file paths.')
         else:
             return dir_path
-    
-    def unzip_data(self):
+
+    def _unzip_data(self) -> None:
         """
         Unzips zipped csv file in the data_dir which is defined
         in cinfig file
         """
-        dir_path = self.return_path()
+        dir_path = self._return_path()
         with zipfile.ZipFile(dir_path, 'r') as zip_ref:
             zip_ref.extractall(self.data_dir)
-    
-    def read_raw_csv(self):
-        self.unzip_data()
+
+    def _read_raw_csv(self) -> pd.DataFrame:
+        """
+        Gets path to raw csv file which is stored in data directory
+        """
+        self._unzip_data()
         csv_file = next(os.walk(self.data_dir))[2][1]
         file_path = os.path.join(self.data_dir, csv_file)
         df = read_csv(file_path)
         return df
-    
-    def remove_non_informative(self):
-        df = self.read_raw_csv()
+
+    def _remove_non_informative(self) -> pd.DataFrame:
+        """
+        Removes non-informative columns which are defined in
+        the config file
+        """
+        df = self._read_raw_csv()
         non_informatives = self.config.features.non_informatives
         df.drop(non_informatives, axis=1, inplace=True)
         return df
-    
-    def remove_outliers(self, perc: float=.99):
-        # Remove outliers
-        df = self.remove_non_informative()
+
+    def _remove_outliers(self, perc: float = .99) -> pd.DataFrame:
+        """Removes outliers from numerical columns"""
+        df = self._remove_non_informative()
         numerical_features = self.config.features.numerical_features
         for col in numerical_features:
             if 'age' in col:
@@ -58,10 +98,10 @@ class DataCleaner:
                     if df[col].loc[i] > 60:
                         df.drop(i, inplace=True)
         return df
-    
-    def dealing_with_nans(self):
-        # Replace nan values with np.nan
-        df = self.remove_outliers()
+
+    def _dealing_with_nans(self) -> pd.DataFrame:
+        """Replace nan values with np.nan"""
+        df = self._remove_outliers()
         nan_1 = self.config.features.nan_1
         nan_1_9 = self.config.features.nan_1_9
 
@@ -75,12 +115,12 @@ class DataCleaner:
         # set index
         df = df.set_index(np.arange(len(df)))
         return df
-    
-    def _dealing_with_categories(self):
-        # DEAL WITH CATEGORICALS
 
-        # name different categories to ba able to analyze better
-        df = self.dealing_with_nans()
+    def _dealing_with_categories(self) -> pd.DataFrame:
+        """
+        Names different categories to ba able to analyze better
+        """
+        df = self._dealing_with_nans()
 
         col = 'casualty_imd_decile'
         df[col][(df[col] == 2) |
@@ -143,14 +183,15 @@ class DataCleaner:
         df[col][df[col] == 2] = 'Passenger'
         df[col][df[col] == 3] = 'Pedestrian'
         return df
-    
+
     def _get_dummies(self) -> pd.DataFrame:
+        """Converts categorical columns with pandas get_dummies method"""
         df = self._dealing_with_categories()
         df = pd.get_dummies(df, drop_first=True)
         return df
-    
+
     def clean_df(self, data_dir: str) -> None:
+        """Saves the cleaned data"""
         df = self._get_dummies()
-        df = df.sample(frac=1, random_state=325)
         file_path = os.path.join(data_dir, 'data_cleaned.csv')
         df.to_csv(file_path, index=False)
