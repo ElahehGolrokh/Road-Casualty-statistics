@@ -1,15 +1,20 @@
 import argparse
+import importlib
 import pickle
+import sklearn
+import uuid
 
 from dataclasses import dataclass
+from datetime import datetime
 from omegaconf import OmegaConf
 from pathlib import Path
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, confusion_matrix
+
 from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score
 
 from src.data_preparation import DataProvider
 from src.data_cleaning import DataCleaner
+from src.evaluation import Evaluator
+from src.managing_report import ReportManager
 
 
 parser = argparse.ArgumentParser(
@@ -22,20 +27,38 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--config',
                     default='config.yaml',
                     help='path to the config file')
-parser.add_argument('--output_dir',
-                    default='data',
-                    help='where to write the prepared data')
+parser.add_argument('--model_name',
+                    default='model',
+                    help='The name used for saving the trained model')
 parser.add_argument('--clean',
                     action=argparse.BooleanOptionalAction,
                     help='whether to execute the data cleaning step.')
 parser.add_argument('--train',
                     action=argparse.BooleanOptionalAction,
                     help='whether to execute the training step.')
+parser.add_argument('--model',
+                    default='LogisticRegression',
+                    help='choose one of the sklearn classification models')
+parser.add_argument('--classifier_package',
+                    default='sklearn.linear_model',
+                    help='choose one of the sklearn classification models')
 parser.add_argument('--evaluate',
                     action=argparse.BooleanOptionalAction,
                     help='whether to execute the evaluation step.')
 
 args = parser.parse_args()
+
+
+def get_model(
+    model_name: str, import_module: str, model_params: dict=None
+) -> sklearn.base.BaseEstimator:
+    """Returns a scikit-learn model."""
+    model_class = getattr(importlib.import_module(import_module), model_name)
+    if model_params:
+        model = model_class(**model_params)  # Instantiates the model
+    else:
+        model = model_class()
+    return model
 
 
 @dataclass
@@ -70,9 +93,11 @@ class Pipeline():
     """
 
     config_path: str = args.config
-    output_dir: str = args.output_dir
     do_clean: bool = args.clean
     do_train: bool = args.train
+    model_name: str = args.model_name
+    model: str = args.model
+    classifier_package: str = args.classifier_package
     do_evaluation: bool = args.evaluate
     run_dir = Path('run')
     # run_info_path = Path('.run.pkl')
@@ -88,7 +113,7 @@ class Pipeline():
 
         model_dir = self.run_dir.joinpath('models')
         model_dir.mkdir(exist_ok=True)
-        self.model_file = model_dir.joinpath('model')
+        self.model_path = model_dir.joinpath(self.model_name)
         if self.do_clean:
             self.clean()
         if self.do_train:
@@ -105,21 +130,12 @@ class Pipeline():
         """Train the model and log to MLFlow and Discord"""
 
         if self.do_train:
-            # print(f'instantiating {self.config.dataset} and config.model ..')
-            # dataset = locate(self.config.dataset)(self.config, self.data_dir)
-            # model_builder = locate(self.config.model)(self.config)
-            # trainer = Trainer(self.config, self.run_dir)
-
-            # tr_gen, n_tr, val_gen, n_val = dataset.create_train_val_generators()
-
-            # with open(self.run_info_path, 'wb') as f:
-            #     pickle.dump(dict(self.active_run.info), f)
-
             data = DataProvider(self.config, phase='train')
             x_train, y_train = data.run()
-            model = LogisticRegression()
+
+            model = get_model(self.model, self.classifier_package) #, model_params
             model.fit(x_train, y_train)
-            with open(self.model_file, 'wb') as file:
+            with open(self.model_path, 'wb') as file:
                 pickle.dump(model, file)
 
     def evaluate(self) -> None:
@@ -128,22 +144,15 @@ class Pipeline():
         if self.do_evaluation:
             data = DataProvider(self.config, phase='test')
             x_test, y_test = data.run()
-
-            with open(self.model_file, 'rb') as model_file:
-                model = pickle.load(model_file)
-            predictions = model.predict(x_test)
-
-            # ## Accuracy
-            print('Accuracy = ', accuracy_score(y_test,predictions))
-            # ## Precision
-            print('Precision = ', precision_score(y_test,predictions))
-            # ## Recall
-            print('Recall = ', recall_score(y_test,predictions))
-            # ## F1 Score
-            print('F1_Score = ', f1_score(y_test,predictions))
-            # dataset = Dataset(self.config, self.data_dir)
-
-            # checkpoints = get_checkpoints_info(self.run_dir.joinpath('checkpoints'))
+            # # updata report file
+            evaluator = Evaluator(self.config,
+                                  x_test=x_test,
+                                  y_test=y_test,
+                                  model_path=self.model_path,
+                                  model_name=self.model_name)
+            report_dict = evaluator.get_results()
+            report_manager = ReportManager()
+            report_manager.update_json(report_dict)
 
     def end(self):
         print('done.')
