@@ -35,9 +35,9 @@ In order to get predictions out of a unlabeled new data stored in a csv file, yo
 python inference.py 
 ```
 You can specify some more details with these arguments:  <br>  
---config_path: default = config.yaml
-               help = path to config file
---model_path: default = run/models/model
-                    help = path to saved ML model
---data_path: default = data/test.csv
-                    help = path to test csv file
+--config_path: default = config.yaml  <br>  
+               help = path to config file  <br>  
+--model_path: default = run/models/model  <br>  
+                    help = path to saved ML model  <br>  
+--data_path: default = data/test.csv  <br>  
+                    help = path to test csv file  <br>  
