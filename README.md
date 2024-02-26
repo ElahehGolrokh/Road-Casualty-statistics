@@ -1,6 +1,6 @@
 # Road-Casualty-statistics
 This project aims to analyze driving accident data to identify patterns and factors contributing to accidents and to provide solutions for reducing them. This analysis and package is developed based on this kaggle dataset:  <br>  
-https://www.kaggle.com/datasets/juhibhojani/road-accidents-data-2022/data
+https://www.kaggle.com/datasets/juhibhojani/road-accidents-data-2022/data  <br> 
 This version only supports LogisticRegression classifier. In future versions svm and RF classifiers are going to be implemented.  <br>
 To see more details about different features including non_informatives, categorical features, numerical features, target column, features in which -1 meaning null and  features in which 9 meaning null you can refere to the config file. Note that these information are for the full analysis. For pedestrians, car passengers and bus passengers which we have EDA for them separately, you have to redefine these features.
 
@@ -8,10 +8,10 @@ To see more details about different features including non_informatives, categor
 The notebooks containing full version of data cleaning and EDA phase are stored in notebooks folder.  <br>  
 This folder is containing the EDA of full data, pedestrians, car passengers and bus passengers.  <br>  
 You can see the documentation for this research in this link:
-https://docs.google.com/document/d/1VrPaA3A7noqAaNo_dyCth6nNfKxIQz8r2JCokE3iqjQ/edit#heading=h.dm3sgcgvgd4g
+https://docs.google.com/document/d/1VrPaA3A7noqAaNo_dyCth6nNfKxIQz8r2JCokE3iqjQ/edit#heading=h.dm3sgcgvgd4g  <br> 
 
 Also the presentation file is accesible in this link:
-https://docs.google.com/presentation/d/1HvPwdv6Sc2e23845jWx6VvSTV-9G6lcnM8CwZiaO-LM/edit#slide=id.ge9090756a_2_12
+https://docs.google.com/presentation/d/1HvPwdv6Sc2e23845jWx6VvSTV-9G6lcnM8CwZiaO-LM/edit#slide=id.ge9090756a_2_12  <br> 
 
 ## Run The ML Pipeline
 In order to run the entire ML pipeline, you can run this command:
