@@ -1,5 +1,6 @@
 # Road-Casualty-statistics
-This project aims to analyze driving accident data to identify patterns and factors contributing to accidents and to provide solutions for reducing them.
+This project aims to analyze driving accident data to identify patterns and factors contributing to accidents and to provide solutions for reducing them. This analysis and package is developed based on this kaggle dataset:  <br>  
+https://www.kaggle.com/datasets/juhibhojani/road-accidents-data-2022/data
 This version only supports LogisticRegression classifier. In future versions svm and RF classifiers are going to be implemented.  <br>
 To see more details about different features including non_informatives, categorical features, numerical features, target column, features in which -1 meaning null and  features in which 9 meaning null you can refere to the config file. Note that these information are for the full analysis. For pedestrians, car passengers and bus passengers which we have EDA for them separately, you have to redefine these features.
 
