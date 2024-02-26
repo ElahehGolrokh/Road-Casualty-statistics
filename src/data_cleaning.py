@@ -195,3 +195,117 @@ class DataCleaner:
         df = self._get_dummies()
         file_path = os.path.join(data_dir, 'data_cleaned.csv')
         df.to_csv(file_path, index=False)
+
+
+class InferenceCleaner:
+    """
+    Cleans the input for inference phase
+
+    ...
+
+    Attributes
+    ----------
+        config: DictConf of config file
+        data_path: str path to test data
+
+    Private Methods
+    -------
+        _read_raw_csv()
+        _remove_non_informative()
+        _is_nans()
+
+    Public Methods
+    -------
+        create_final_df()
+
+    """
+    def __init__(self, config: DictConfig, data_path: str) -> None:
+        self.config = config
+        self.data_path = data_path
+
+    def _read_raw_csv(self) -> pd.DataFrame:
+        """
+        Returns pandas dataframe of input csv file
+        """
+        df = read_csv(self.data_path)
+        return df
+
+    def _remove_non_informative(self) -> pd.DataFrame:
+        """
+        Removes non-informative columns which are defined in
+        the config file
+        """
+        df = self._read_raw_csv()
+        non_informatives = self.config.features.non_informatives
+        df.drop(non_informatives, axis=1, inplace=True)
+        return df
+
+    def _is_nans(self) -> pd.DataFrame:
+        """Checks if there are any nan values in input data"""
+        df = self._remove_non_informative()
+        nan_1 = self.config.features.nan_1
+        nan_1_9 = self.config.features.nan_1_9
+
+        for col in nan_1:
+            df[col][df[col] == -1] = np.nan
+
+        for col in nan_1_9:
+            df[col][(df[col] == -1) | (df[col] == 9)] = np.nan
+
+        if df.isnull().sum().any():
+            raise ValueError('There are some nan values in your input data')
+        return df
+
+    def create_final_df(self) -> pd.DataFrame:
+        """
+        Modifies the columns of the cleaned test data in a way that the
+        final df would be the same as the trained df which has been used
+        for training the saved model.
+        """
+        df = self._is_nans()
+        df['casualty_class_Passenger'] = self.create_columns(df,
+                                                             'casualty_class',
+                                                             'Passenger')
+        df['casualty_class_Pedestrian'] = self.create_columns(df,
+                                                              'casualty_class',
+                                                              'Pedestrian')
+        df['sex_of_casualty_Male'] = self.create_columns(df,
+                                                         'sex_of_casualty',
+                                                         'Male')
+        df['Car'] = self.create_columns(df,
+                                        'casualty_type',
+                                        'Car')
+        df['Cyclist'] = self.create_columns(df,
+                                            'casualty_type',
+                                            'Cyclist')
+        df['Motorcycle'] = self.create_columns(df,
+                                               'casualty_type',
+                                               'Motorcycle')
+        df['Other'] = self.create_columns(df,
+                                          'casualty_type',
+                                          'Other_vehicle_occupant')
+        df['Pedestrian'] = self.create_columns(df,
+                                               'casualty_type',
+                                               'Pedestrian')
+        df['Van'] = self.create_columns(df,
+                                        'casualty_type',
+                                        'Van')
+        df['Urban_area'] = self.create_columns(df,
+                                               'casualty_home_area_type',
+                                               'Urban_area')
+        df['middle_deprived'] = self.create_columns(df,
+                                                    'casualty_imd_decile',
+                                                    'middle_deprived')
+        df['more_deprived'] = self.create_columns(df,
+                                                  'casualty_imd_decile',
+                                                  'more_deprived')
+        df.drop(['casualty_class', 'sex_of_casualty', 'casualty_type',
+                 'casualty_home_area_type', 'casualty_imd_decile'],
+                axis=1,
+                inplace=True)
+        return df
+
+    @staticmethod
+    def create_columns(df, old_col, value):
+        """Fills new values based on old column values"""
+        return df[old_col].apply(lambda x: 1 if x == value else 0)

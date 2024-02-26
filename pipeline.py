@@ -14,8 +14,8 @@ from src.training import Trainer
 
 parser = argparse.ArgumentParser(
     prog='pipeline.py',
-    description='Scrape Switzerland real state data from' +
-                'https://www.homegate.ch/en',
+    description='running pipeline for developing ML model' +
+                'for analysing road casualty statistics',
     epilog=f'Thanks for using. => {SUPPORT["email"]} '
 )
 
